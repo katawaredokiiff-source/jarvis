@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS - Chat Esportivo</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1b2a;
+      color: white;
+    }
+
+    .app { display: flex; height: 100vh; }
+
+    .sidebar {
+      width: 250px;
+      background-color: #1b263b;
+      padding: 20px;
+      border-right: 2px solid #2c3e50;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .sidebar-logo img {
+      width: 80px; height: 80px;
+      object-fit: contain;
+      border-radius: 50%;
+      background-color: #0d1b2a;
+      padding: 6px;
+    }
+
+    .sidebar-logo span { font-size: 22px; font-weight: bold; }
+
+    .esporte-botao {
+      background-color: #415a77;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 16px;
+    }
+
+    .esporte-botao:hover { background-color: #4ea8de; }
+
+    .chat-area { flex: 1; display: flex; flex-direction: column; }
+
+    .chat-header {
+      background-color: #4ea8de;
+      padding: 12px 20px;
+      font-weight: bold;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-header img {
+      width: 36px; height: 36px;
+      object-fit: contain;
+      border-radius: 50%;
+      background-color: #3a97cd;
+      padding: 3px;
+    }
+
+    #caixa-de-chat {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mensagem {
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 65%;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    .mensagem-usuario {
+      background-color: #4ea8de;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .mensagem-bot {
+      background-color: #415a77;
+      align-self: flex-start;
+    }
+
+    .mensagem-bot-com-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .msg-logo {
+      width: 32px; height: 32px;
+      object-fit: contain;
+      border-radius: 50%;
+      background-color: #0d1b2a;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .area-de-input {
+      display: flex;
+      padding: 12px;
+      background-color: #1b263b;
+      gap: 8px;
+      border-top: 1px solid #2c3e50;
+      align-items: center; /* ← garante alinhamento vertical do botão emoji */
+    }
+
+    #campo-mensagem {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      background-color: #0d1b2a;
+      color: white;
+    }
+
+    #campo-mensagem::placeholder { color: #888; }
+
+    /* ── MUDANÇA 1: estilo do botão emoji ── */
+    #botao-emoji {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 6px 8px;
+      line-height: 1;
+      transition: background 0.15s, transform 0.15s;
+    }
+    #botao-emoji:hover { background: rgba(255,255,255,0.1); transform: scale(1.15); }
+
+    #botao-enviar {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4ea8de;
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    #botao-enviar:hover { background-color: #3a97cd; }
+
+    #botao-enviar:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    /* variáveis do emoji picker para combinar com o tema */
+    :root {
+      --ep-bg:          #1b263b;
+      --ep-border:      rgba(255,255,255,.15);
+      --ep-search-bg:   rgba(255,255,255,.07);
+      --ep-text:        #ffffff;
+      --ep-muted:       #666;
+      --ep-hover:       rgba(255,255,255,.1);
+      --ep-accent:      #4ea8de;
+      --ep-accent-soft: rgba(78,168,222,.2);
+    }
+
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      font-family: 'Courier New', monospace;
+      transition: opacity 0.8s ease;
+    }
+
+    #loading-screen.ocultar { opacity: 0; pointer-events: none; }
+
+    .scanline {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,255,255,.015) 2px, rgba(0,255,255,.015) 4px);
+      pointer-events: none;
+    }
+
+    .svg-frame {
+      position: relative;
+      width: 280px; height: 280px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .svg-frame svg { position: absolute; width: 280px; height: 280px; fill: none; }
+    .svg-frame circle { filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor); }
+
+    .corner { position: absolute; width: 16px; height: 16px; border-color: #00ffff; border-style: solid; opacity: .5; }
+    .corner-tl { top: -8px;    left: -8px;  border-width: 1.5px 0 0 1.5px; }
+    .corner-tr { top: -8px;    right: -8px; border-width: 1.5px 1.5px 0 0; }
+    .corner-bl { bottom: -8px; left: -8px;  border-width: 0 0 1.5px 1.5px; }
+    .corner-br { bottom: -8px; right: -8px; border-width: 0 1.5px 1.5px 0; }
+
+    #out2   { animation: spin     12s linear infinite; transform-origin: center; }
+    #out3   { animation: spin      6s linear infinite; transform-origin: center; }
+    #inner1 { animation: spin-rev  8s linear infinite; transform-origin: center; }
+    #inner3 { animation: spin      5s linear infinite; transform-origin: center; }
+
+    @keyframes spin     { to { transform: rotate(360deg);  } }
+    @keyframes spin-rev { to { transform: rotate(-360deg); } }
+
+    #center1 {
+      fill: #ffdd00;
+      animation: pulse 2s ease-in-out infinite;
+      transform-origin: 172px 172px;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1);   opacity: 1;  }
+      50%       { transform: scale(1.6); opacity: .7; }
+    }
+
+    .info-panel { margin-top: 52px; text-align: center; }
+
+    .system-name {
+      color: #00ffff;
+      font-size: 13px;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      opacity: .85;
+      margin-bottom: 20px;
+      animation: flicker 4s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 95%, 100% { opacity: .85; }
+      96% { opacity: .3;  }
+      97% { opacity: .85; }
+      98% { opacity: .5;  }
+      99% { opacity: .85; }
+    }
+
+    .progress-label { color: #ccee00; font-size: 10px; letter-spacing: 3px; margin-bottom: 10px; opacity: .7; }
+
+    .progress-bar-wrap {
+      width: 240px; height: 3px;
+      background: rgba(0,255,255,.1);
+      border: .5px solid rgba(0,255,255,.2);
+      margin: 0 auto 12px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill { height: 100%; width: 0%; background: #00ffff; box-shadow: 0 0 8px #00ffff; transition: width .08s linear; }
+
+    .status-text  { color: #00ffff; font-size: 10px; letter-spacing: 2px; opacity: .5; height: 14px; }
+    .pct-display  { color: #ffdd00; font-size: 11px; letter-spacing: 2px; margin-top: 8px; opacity: .8; }
+
+    #tela-inicio {
+      position: fixed;
+      inset: 0;
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      font-family: 'Courier New', monospace;
+    }
+
+    #tela-inicio p {
+      color: #00ffff;
+      font-size: 11px;
+      letter-spacing: 5px;
+      opacity: 0.5;
+      margin-bottom: 40px;
+      animation: flicker 4s infinite;
+    }
+
+    #btn-iniciar {
+      position: relative;
+      background: transparent;
+      border: none;
+      color: #00ffff;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      letter-spacing: 6px;
+      padding: 20px 52px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    #btn-iniciar::before,
+    #btn-iniciar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid #00ffff;
+      opacity: 0.4;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    #btn-iniciar::after {
+      transform: scale(1.08);
+      opacity: 0.15;
+    }
+
+    #btn-iniciar:hover { color: #ffffff; }
+    #btn-iniciar:hover::before { opacity: 0.9; }
+    #btn-iniciar:hover::after  { transform: scale(1.15); opacity: 0.3; }
+
+    .digitando {
+      background-color: #415a77;
+      align-self: flex-start;
+      padding: 10px 15px;
+      border-radius: 10px;
+      color: #aaa;
+      font-style: italic;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="tela-inicio">
+    <p>SISTEMA OFFLINE</p>
+    <button id="btn-iniciar" onclick="iniciarJarvis()">
+      ▶ INICIAR JARVIS
+    </button>
+  </div>
+
+  <audio id="som-loading" src="jarvis.mp3" preload="auto"></audio>
+
+  <div id="loading-screen">
+    <div class="scanline"></div>
+    <div class="svg-frame">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <svg viewBox="0 0 344 344"><circle cx="172" cy="172" r="138" stroke="#00ffff" stroke-width="2.5" stroke-dasharray="60 18 30 18 80 18 40 18" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 344 344"><g id="out2"><circle cx="172" cy="172" r="108" stroke="#ccee00" stroke-width="2" stroke-dasharray="50 15 25 15 65 15" stroke-linecap="round"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="out3"><circle cx="172" cy="172" r="80" stroke="#00ffff" stroke-width="2" stroke-dasharray="40 14 20 14 55 14"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="inner1"><circle cx="172" cy="172" r="55" stroke="#ddcc00" stroke-width="2" stroke-dasharray="30 12 18 12 40 12"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="inner3"><circle cx="172" cy="172" r="35" stroke="#00ffff" stroke-width="2" stroke-dasharray="22 10 14 10"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="center"><circle id="center1" cx="172" cy="172" r="10"/></g></svg>
+    </div>
+    <div class="info-panel">
+      <div class="system-name">J.A.R.V.I.S</div>
+      <div class="progress-label" id="stage-label">INICIALIZANDO SISTEMA</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="pbar"></div></div>
+      <div class="status-text" id="status-text">AGUARDANDO...</div>
+      <div class="pct-display" id="pct-display">0%</div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <img src="reator.png" alt="Logo JARVIS">
+        <span>JARVIS</span>
+      </div>
+      <div class="esporte-botao" onclick="escolherEsporte('Futebol')">⚽ Futebol</div>
+      <div class="esporte-botao" onclick="escolherEsporte('Basquete')">🏀 Basquete</div>
+      <div class="esporte-botao" onclick="escolherEsporte('Futebol Americano')">🏈 Fut. Americano</div>
+      <div class="esporte-botao" onclick="escolherEsporte('Tênis')">🎾 Tênis</div>
+      <div class="esporte-botao" onclick="escolherEsporte('Vôlei')">🏐 Vôlei</div>
+    </div>
+
+    <div class="chat-area">
+      <div class="chat-header">
+        <img src="reator.png" alt="JARVIS">
+        JARVIS - Assistente Esportivo
+      </div>
+      <div id="caixa-de-chat"></div>
+
+      <div class="area-de-input">
+        <input
+          type="text"
+          id="campo-mensagem"
+          placeholder="Digite sua pergunta sobre esportes..."
+          onkeydown="verificarEnter(event)"
+        />
+        <!-- MUDANÇA 2: botão emoji adicionado aqui, entre o input e o botão enviar -->
+        <button id="botao-emoji" title="Emojis">😊</button>
+        <button id="botao-enviar" onclick="enviarMensagem()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MUDANÇA 3: importar o emoji-picker.js antes de fechar o body -->
+  <script src="emoji-picker.js"></script>
+  <script>
+    new EmojiPicker({
+      inputSelector:   "#campo-mensagem",
+      triggerSelector: "#botao-emoji"
+    });
+  </script>
+
+  <script>
+    const caixaChat = document.getElementById("caixa-de-chat");
+
+    let historico = [];
+
+    function adicionarMensagem(texto, tipo) {
+      const msg = document.createElement("div");
+      msg.classList.add("mensagem", tipo);
+      caixaChat.appendChild(msg);
+      caixaChat.scrollTop = caixaChat.scrollHeight;
+
+      if (tipo === "mensagem-bot") {
+        const img = document.createElement("img");
+        img.src = "reator.png"; img.alt = "JARVIS"; img.className = "msg-logo";
+        msg.classList.add("mensagem-bot-com-logo");
+        msg.appendChild(img);
+
+        const span = document.createElement("span");
+        msg.appendChild(span);
+
+        let i = 0;
+        const intervalo = setInterval(function () {
+          span.textContent += texto[i++];
+          caixaChat.scrollTop = caixaChat.scrollHeight;
+          if (i >= texto.length) clearInterval(intervalo);
+        }, 18);
+      } else {
+        msg.innerText = texto;
+      }
+    }
+
+    function mostrarDigitando() {
+      const div = document.createElement("div");
+      div.classList.add("digitando");
+      div.id = "digitando";
+      div.innerText = "JARVIS está digitando...";
+      caixaChat.appendChild(div);
+      caixaChat.scrollTop = caixaChat.scrollHeight;
+    }
+
+    function removerDigitando() {
+      const div = document.getElementById("digitando");
+      if (div) div.remove();
+    }
+
+    function escolherEsporte(nomeEsporte) {
+      enviarParaAPI("Quero falar sobre " + nomeEsporte);
+    }
+
+    async function enviarParaAPI(texto) {
+      const botao = document.getElementById("botao-enviar");
+      const campo = document.getElementById("campo-mensagem");
+
+      adicionarMensagem(texto, "mensagem-usuario");
+      campo.value = "";
+      botao.disabled = true;
+
+      historico.push({ role: "user", content: texto });
+      mostrarDigitando();
+
+      try {
+        const resposta = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mensagem: texto, historico: historico })
+        });
+
+        const dados = await resposta.json();
+        removerDigitando();
+
+        const textoBot = dados.resposta || dados.erro || "Erro desconhecido.";
+        historico.push({ role: "assistant", content: textoBot });
+        adicionarMensagem(textoBot, "mensagem-bot");
+
+      } catch (err) {
+        removerDigitando();
+        adicionarMensagem("Erro ao conectar com o servidor.", "mensagem-bot");
+      }
+
+      botao.disabled = false;
+      campo.focus();
+    }
+
+    async function enviarMensagem() {
+      const campo = document.getElementById("campo-mensagem");
+      const texto = campo.value.trim();
+      if (!texto) return;
+      await enviarParaAPI(texto);
+    }
+
+    function verificarEnter(evento) {
+      if (evento.key === "Enter") enviarMensagem();
+    }
+
+    const stages   = ["INICIALIZANDO SISTEMA", "CARREGANDO MÓDULOS", "CALIBRANDO SENSORES", "VERIFICANDO INTEGRIDADE", "SINCRONIZANDO IA", "SISTEMA PRONTO"];
+    const statuses = ["BOOT SEQUENCE STARTED...", "LOADING CORE MODULES...", "SENSOR ARRAY ONLINE...", "INTEGRITY CHECK: OK", "AI SYNC IN PROGRESS...", "ALL SYSTEMS NOMINAL"];
+
+    let pct = 0, stageIdx = 0;
+    const pbar       = document.getElementById("pbar");
+    const stageLabel = document.getElementById("stage-label");
+    const statusText = document.getElementById("status-text");
+    const pctDisplay = document.getElementById("pct-display");
+    const loading    = document.getElementById("loading-screen");
+
+    function tick() {
+      if (pct < 100) pct = Math.min(pct + Math.random() * 2.2, 100);
+
+      const p = Math.round(pct);
+      pctDisplay.textContent = p + "%";
+      pbar.style.width = p + "%";
+
+      const idx = Math.min(Math.floor(pct / 17), stages.length - 1);
+      if (idx !== stageIdx) {
+        stageIdx = idx;
+        stageLabel.textContent = stages[idx];
+        statusText.textContent = statuses[idx];
+      }
+
+      if (pct >= 100) {
+        stageLabel.textContent = stages[5];
+        statusText.textContent = statuses[5];
+        pctDisplay.textContent = "100%";
+        setTimeout(function () {
+          loading.classList.add("ocultar");
+          setTimeout(function () {
+            loading.style.display = "none";
+            adicionarMensagem("Olá! Eu sou o JARVIS. Escolha um esporte ou me pergunte qualquer coisa!", "mensagem-bot");
+          }, 800);
+        }, 1800);
+        return;
+      }
+
+      setTimeout(tick, 80);
+    }
+
+    function iniciarJarvis() {
+      document.getElementById("tela-inicio").style.display = "none";
+      document.getElementById("som-loading").play();
+      tick();
+    }
+  </script>
+
+</body>
+</html>

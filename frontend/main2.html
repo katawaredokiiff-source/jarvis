@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS - Chat Esportivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --cyan:    #00e5ff;
+      --cyan-dim: rgba(0,229,255,0.12);
+      --cyan-glow: rgba(0,229,255,0.25);
+      --yellow:  #f0d060;
+      --bg:      #080f17;
+      --bg2:     #0d1820;
+      --bg3:     #111e2a;
+      --bg4:     #162333;
+      --border:  rgba(0,229,255,0.15);
+      --border2: rgba(0,229,255,0.28);
+      --text:    #d6eaf5;
+      --text2:   #6a8fa8;
+      --text3:   #3a5a70;
+      --accent:  #1ab8d8;
+      --accent2: #0f8aa8;
+      --user-bg: linear-gradient(135deg, #0f4f6a 0%, #0d3d56 100%);
+      --bot-bg:  #111e2a;
+      --red:     #ff4d6a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 3px,
+        rgba(0,229,255,0.008) 3px,
+        rgba(0,229,255,0.008) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ══════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════ */
+    .sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .logo-ring {
+      position: relative;
+      width: 72px;
+      height: 72px;
+    }
+
+    .logo-ring svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .logo-ring img {
+      position: absolute;
+      inset: 10px;
+      width: calc(100% - 20px);
+      height: calc(100% - 20px);
+      border-radius: 50%;
+      object-fit: contain;
+      background: var(--bg);
+    }
+
+    .logo-ring .ring-outer { animation: spin 12s linear infinite; transform-origin: center; }
+    .logo-ring .ring-inner { animation: spin-rev 7s linear infinite; transform-origin: center; }
+
+    @keyframes spin     { to { transform: rotate(360deg);  } }
+    @keyframes spin-rev { to { transform: rotate(-360deg); } }
+
+    .sidebar-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .sidebar-subtitle {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text3);
+      text-transform: uppercase;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text3);
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #00ff88;
+      box-shadow: 0 0 6px #00ff88;
+      animation: blink 2.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    .sidebar-section-label {
+      padding: 16px 20px 8px;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--text3);
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+    }
+
+    .sidebar-nav::-webkit-scrollbar { width: 3px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .esporte-botao {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+      border: 1px solid transparent;
+      position: relative;
+      letter-spacing: 0.3px;
+    }
+
+    .esporte-botao:hover {
+      background: var(--cyan-dim);
+      border-color: var(--border2);
+      color: var(--cyan);
+    }
+
+    .esporte-botao.ativo {
+      background: var(--cyan-dim);
+      border-color: var(--border2);
+      color: var(--cyan);
+    }
+
+    .esporte-botao.ativo::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 6px; bottom: 6px;
+      width: 2px;
+      background: var(--cyan);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .esporte-emoji { font-size: 16px; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 9px;
+      color: var(--text3);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1.5px;
+    }
+
+    /* ══════════════════════════════════
+       ÁREA PRINCIPAL
+    ══════════════════════════════════ */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      min-width: 0;
+    }
+
+    .chat-header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      background: var(--cyan-dim);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .header-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .header-subtitle {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 1.5px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .chat-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-badge {
+      background: var(--cyan-dim);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 9px;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+    }
+
+    #caixa-de-chat {
+      flex: 1;
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #caixa-de-chat::-webkit-scrollbar { width: 4px; }
+    #caixa-de-chat::-webkit-scrollbar-track { background: transparent; }
+    #caixa-de-chat::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .separador-tempo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0;
+    }
+
+    .separador-tempo::before,
+    .separador-tempo::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .separador-tempo span {
+      font-size: 9px;
+      color: var(--text3);
+      letter-spacing: 2px;
+      font-family: 'Space Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .msg-row.usuario { flex-direction: row-reverse; align-items: flex-end; }
+
+    .msg-avatar {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .msg-avatar img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      padding: 3px;
+    }
+
+    .mensagem {
+      padding: 8px 12px;
+      border-radius: 10px;
+      word-break: break-word;
+      white-space: normal;
+      line-height: 1.5;
+      font-size: 13px;
+      position: relative;
+      max-width: 520px;
+    }
+
+    .mensagem-bot {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 3px;
+      color: var(--text);
+    }
+
+    /* Formatação interna do balão do bot */
+    .mensagem-bot p {
+      margin-bottom: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .mensagem-bot p:last-child {
+      margin-bottom: 0;
+    }
+    .mensagem-bot ul,
+    .mensagem-bot ol {
+      margin: 4px 0 6px 0;
+      padding: 0;
+      list-style: none;
+    }
+    .mensagem-bot li {
+      margin-bottom: 4px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      padding-left: 14px;
+      position: relative;
+      color: var(--text);
+    }
+    .mensagem-bot ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    .mensagem-bot ol {
+      counter-reset: item;
+    }
+    .mensagem-bot ol li {
+      counter-increment: item;
+    }
+    .mensagem-bot ol li::before {
+      content: counter(item) ".";
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-size: 11px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      top: 1px;
+    }
+    .mensagem-bot strong {
+      color: #e8f4fc;
+      font-weight: 600;
+    }
+    .mensagem-bot em {
+      color: var(--yellow);
+      font-style: normal;
+      font-weight: 500;
+    }
+    .mensagem-bot .bot-section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin: 10px 0 5px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border2);
+    }
+    .mensagem-bot .bot-section-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 3px;
+      background: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 4px var(--cyan);
+      flex-shrink: 0;
+    }
+    .mensagem-bot .bot-section-title:first-child {
+      margin-top: 2px;
+    }
+    .mensagem-bot .bot-tag {
+      display: inline-block;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 10.5px;
+      color: var(--cyan);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+    .mensagem-bot .bot-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 8px 0;
+    }
+    .mensagem-bot .bot-highlight {
+      background: rgba(0,229,255,0.06);
+      border-left: 2px solid var(--cyan);
+      border-radius: 0 4px 4px 0;
+      padding: 5px 10px;
+      margin: 6px 0;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .mensagem-usuario {
+      background: var(--user-bg);
+      border: 1px solid rgba(0,229,255,0.2);
+      border-bottom-right-radius: 3px;
+      color: #e8f4fc;
+      max-width: 400px;
+    }
+
+    .msg-time {
+      font-size: 9px;
+      color: var(--text3);
+      font-family: 'Space Mono', monospace;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .msg-row.usuario .msg-time { text-align: right; }
+
+    .msg-imagem {
+      max-width: 240px;
+      max-height: 180px;
+      border-radius: 8px;
+      margin-top: 8px;
+      display: block;
+      border: 1px solid var(--border2);
+      cursor: zoom-in;
+      transition: opacity 0.2s;
+    }
+    .msg-imagem:hover { opacity: 0.88; }
+
+    .msg-arquivo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .msg-arquivo-icone { font-size: 22px; flex-shrink: 0; }
+    .msg-arquivo-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+    .msg-arquivo-nome { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-arquivo-tamanho { font-size: 10px; color: var(--text3); }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      border-bottom-left-radius: 3px;
+      width: fit-content;
+    }
+
+    .typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: typing 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30%            { transform: translateY(-4px); opacity: 1; }
+    }
+
+    /* ══════════════════════════════════
+       PREVIEW DE ARQUIVOS
+    ══════════════════════════════════ */
+    #area-preview {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    #area-preview.ativo { display: flex; }
+    #area-preview::-webkit-scrollbar { height: 3px; }
+    #area-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .preview-item {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      animation: popIn 0.18s ease;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .preview-item img { width: 72px; height: 72px; object-fit: cover; display: block; }
+
+    .preview-item-arquivo {
+      width: 72px; height: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px;
+      text-align: center;
+    }
+
+    .preview-item-arquivo .preview-icone { font-size: 22px; }
+
+    .preview-item-arquivo .preview-nome {
+      font-size: 9px;
+      color: var(--text2);
+      word-break: break-all;
+      overflow: hidden;
+      max-height: 26px;
+      line-height: 1.2;
+    }
+
+    .preview-remover {
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 16px; height: 16px;
+      background: rgba(10,20,30,0.85);
+      border: 1px solid rgba(255,77,106,0.5);
+      border-radius: 50%;
+      color: var(--red);
+      font-size: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      padding: 0;
+    }
+    .preview-remover:hover { background: rgba(255,77,106,0.25); }
+
+    /* ══════════════════════════════════
+       INPUT AREA
+    ══════════════════════════════════ */
+    .area-de-input {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg2);
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .btn-anexo {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      background: var(--bg3);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-anexo:hover {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .btn-anexo input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      font-size: 0;
+    }
+
+    #campo-mensagem {
+      flex: 1;
+      height: 36px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border2);
+      outline: none;
+      font-size: 13.5px;
+      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Inter', sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      transition: border-color 0.2s;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+  
+
+    #campo-mensagem::placeholder { color: var(--text3); }
+
+    #campo-mensagem:focus {
+      border-color: rgba(0,229,255,0.45);
+      background: var(--bg4);
+    }
+
+    #botao-enviar {
+      height: 36px;
+      padding: 0 18px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent2);
+      color: #e0f6fc;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    #botao-enviar:hover {
+      background: var(--accent);
+      border-color: var(--cyan);
+      color: var(--bg);
+    }
+
+    #botao-enviar:disabled {
+      background: var(--bg3);
+      border-color: var(--border);
+      color: var(--text3);
+      cursor: not-allowed;
+    }
+
+    .input-hint {
+      font-size: 9px;
+      color: var(--text3);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+      padding: 0 4px 0 0;
+      white-space: nowrap;
+    }
+
+    /* ══════════════════════════════════
+       LIGHTBOX
+    ══════════════════════════════════ */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,12,20,0.94);
+      z-index: 99998;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      backdrop-filter: blur(4px);
+    }
+
+    #lightbox.ativo { display: flex; }
+
+    #lightbox img {
+      max-width: 88vw;
+      max-height: 88vh;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+    }
+
+    /* ══════════════════════════════════
+       TOAST
+    ══════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--cyan);
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+
+    #toast.visivel {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ══════════════════════════════════
+       DRAG OVER
+    ══════════════════════════════════ */
+    .chat-area.drag-over #caixa-de-chat {
+      outline: 2px dashed rgba(0,229,255,0.35);
+      outline-offset: -10px;
+      background: rgba(0,229,255,0.03);
+    }
+
+    /* ══════════════════════════════════
+       TELA DE INÍCIO
+    ══════════════════════════════════ */
+    #tela-inicio {
+      position: fixed;
+      inset: 0;
+      background: #050c14;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      font-family: 'Space Mono', monospace;
+      gap: 0;
+    }
+
+    #tela-inicio::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .inicio-logo {
+      position: relative;
+      width: 100px; height: 100px;
+      margin-bottom: 32px;
+    }
+
+    .inicio-logo svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    .inicio-logo img {
+      position: absolute;
+      inset: 16px;
+      width: calc(100% - 32px);
+      height: calc(100% - 32px);
+      border-radius: 50%;
+      object-fit: contain;
+      background: #050c14;
+    }
+
+    .inicio-logo .r1 { animation: spin 14s linear infinite; transform-origin: center; }
+    .inicio-logo .r2 { animation: spin-rev 8s linear infinite; transform-origin: center; }
+
+    .inicio-tagline {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: rgba(0,229,255,0.35);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      animation: flicker 5s infinite;
+    }
+
+    .inicio-nome {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 12px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .inicio-desc {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: rgba(0,229,255,0.3);
+      text-transform: uppercase;
+      margin-bottom: 52px;
+    }
+
+    #btn-iniciar {
+      position: relative;
+      background: transparent;
+      border: 1px solid rgba(0,229,255,0.4);
+      color: var(--cyan);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 5px;
+      padding: 16px 48px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    #btn-iniciar::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px solid rgba(0,229,255,0.12);
+      transition: opacity 0.3s, inset 0.3s;
+    }
+
+    #btn-iniciar:hover {
+      background: rgba(0,229,255,0.08);
+      border-color: var(--cyan);
+      color: #fff;
+    }
+
+    #btn-iniciar:hover::before {
+      inset: -8px;
+      border-color: rgba(0,229,255,0.2);
+    }
+
+    /* ══════════════════════════════════
+       LOADING SCREEN
+    ══════════════════════════════════ */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #050c14;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      font-family: 'Space Mono', monospace;
+      transition: opacity 0.8s ease;
+    }
+
+    #loading-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    #loading-screen.ocultar { opacity: 0; pointer-events: none; }
+
+    .loading-rings {
+      position: relative;
+      width: 200px; height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    .loading-rings svg {
+      position: absolute;
+      width: 200px; height: 200px;
+      fill: none;
+    }
+
+    .loading-rings .lr1 { animation: spin 14s linear infinite; transform-origin: 100px 100px; }
+    .loading-rings .lr2 { animation: spin-rev 8s linear infinite; transform-origin: 100px 100px; }
+    .loading-rings .lr3 { animation: spin 5s linear infinite; transform-origin: 100px 100px; }
+    .loading-rings .lr4 { animation: spin-rev 10s linear infinite; transform-origin: 100px 100px; }
+
+    .loading-center-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--yellow);
+      position: relative;
+      z-index: 1;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,208,96,0.5); }
+      50%       { transform: scale(1.4); box-shadow: 0 0 0 8px rgba(240,208,96,0); }
+    }
+
+    .loading-info { text-align: center; }
+
+    .loading-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: flicker 5s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 94%, 100% { opacity: 1; }
+      95%  { opacity: 0.2; }
+      96%  { opacity: 1; }
+      97%  { opacity: 0.5; }
+      98%  { opacity: 1; }
+    }
+
+    .loading-stage {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--yellow);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      height: 12px;
+    }
+
+    .loading-bar-wrap {
+      width: 280px;
+      height: 2px;
+      background: rgba(0,229,255,0.08);
+      border: 0.5px solid rgba(0,229,255,0.18);
+      margin: 0 auto 10px;
+      overflow: hidden;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--cyan);
+      transition: width 0.08s linear;
+    }
+
+    .loading-status {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: rgba(0,229,255,0.35);
+      height: 12px;
+      text-transform: uppercase;
+    }
+
+    .loading-pct {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--yellow);
+      margin-top: 8px;
+    }
+
+    .corner {
+      position: absolute;
+      width: 14px; height: 14px;
+      border-color: rgba(0,229,255,0.4);
+      border-style: solid;
+    }
+    .corner-tl { top: 20px; left: 20px; border-width: 1px 0 0 1px; }
+    .corner-tr { top: 20px; right: 20px; border-width: 1px 1px 0 0; }
+    .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 1px 1px; }
+    .corner-br { bottom: 20px; right: 20px; border-width: 0 1px 1px 0; }
+  </style>
+</head>
+
+<body>
+
+  <!-- tela inicial -->
+  <div id="tela-inicio">
+    <div class="inicio-logo">
+      <svg viewBox="0 0 100 100">
+        <g class="r1">
+          <circle cx="50" cy="50" r="44" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="20 6 10 6 30 6" stroke-linecap="round" opacity="0.6"/>
+        </g>
+        <g class="r2">
+          <circle cx="50" cy="50" r="36" stroke="#f0d060" stroke-width="0.8" stroke-dasharray="14 5 8 5 22 5" stroke-linecap="round" opacity="0.5"/>
+        </g>
+      </svg>
+      <img src="reator.png" alt="JARVIS">
+    </div>
+    <p class="inicio-tagline">Sistema de assistência inteligente</p>
+    <div class="inicio-nome">JARVIS</div>
+    <p class="inicio-desc">Just A Rather Very Intelligent System</p>
+    <button id="btn-iniciar" onclick="iniciarJarvis()">▶ Inicializar sistema</button>
+  </div>
+
+  <audio id="som-loading" src="jarvis.mp3" preload="auto"></audio>
+
+  <!-- loading -->
+  <div id="loading-screen">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="loading-rings">
+      <svg viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="92" stroke="#00e5ff" stroke-width="1" stroke-dasharray="40 12 20 12 60 12" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+      <svg viewBox="0 0 200 200">
+        <g class="lr1">
+          <circle cx="100" cy="100" r="76" stroke="#f0d060" stroke-width="1" stroke-dasharray="32 10 16 10 48 10" stroke-linecap="round" opacity="0.45"/>
+        </g>
+      </svg>
+      <svg viewBox="0 0 200 200">
+        <g class="lr2">
+          <circle cx="100" cy="100" r="60" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="24 8 12 8 36 8" opacity="0.4"/>
+        </g>
+      </svg>
+      <svg viewBox="0 0 200 200">
+        <g class="lr3">
+          <circle cx="100" cy="100" r="44" stroke="#f0d060" stroke-width="0.8" stroke-dasharray="16 6 10 6 24 6" opacity="0.35"/>
+        </g>
+      </svg>
+      <svg viewBox="0 0 200 200">
+        <g class="lr4">
+          <circle cx="100" cy="100" r="28" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="10 5 6 5" opacity="0.3"/>
+        </g>
+      </svg>
+      <div class="loading-center-dot"></div>
+    </div>
+
+    <div class="loading-info">
+      <div class="loading-title">J.A.R.V.I.S</div>
+      <div class="loading-stage" id="stage-label">Inicializando sistema</div>
+      <div class="loading-bar-wrap">
+        <div class="loading-bar-fill" id="pbar"></div>
+      </div>
+      <div class="loading-status" id="status-text">Aguardando...</div>
+      <div class="loading-pct" id="pct-display">0%</div>
+    </div>
+  </div>
+
+  <!-- lightbox -->
+  <div id="lightbox" onclick="fecharLightbox()">
+    <img id="lightbox-img" src="" alt="Imagem ampliada">
+  </div>
+
+  <!-- toast -->
+  <div id="toast"></div>
+
+  <!-- app principal -->
+  <div class="app">
+
+    <!-- sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-ring">
+          <svg viewBox="0 0 72 72">
+            <g class="ring-outer">
+              <circle cx="36" cy="36" r="32" stroke="#00e5ff" stroke-width="0.8" stroke-dasharray="16 5 8 5 24 5" stroke-linecap="round" opacity="0.55"/>
+            </g>
+            <g class="ring-inner">
+              <circle cx="36" cy="36" r="24" stroke="#f0d060" stroke-width="0.8" stroke-dasharray="10 4 6 4 16 4" stroke-linecap="round" opacity="0.45"/>
+            </g>
+          </svg>
+          <img src="reator.png" alt="JARVIS Logo">
+        </div>
+        <div class="sidebar-title">JARVIS</div>
+        <div class="sidebar-subtitle">Assistente v2.0</div>
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          Online
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">Módulos esportivos</div>
+
+      <div class="sidebar-nav">
+        <div class="esporte-botao" onclick="escolherEsporte('Futebol', this)">
+          <span class="esporte-emoji">⚽</span> Futebol
+        </div>
+        <div class="esporte-botao" onclick="escolherEsporte('Basquete', this)">
+          <span class="esporte-emoji">🏀</span> Basquete
+        </div>
+        <div class="esporte-botao" onclick="escolherEsporte('Futebol Americano', this)">
+          <span class="esporte-emoji">🏈</span> Fut. Americano
+        </div>
+        <div class="esporte-botao" onclick="escolherEsporte('Tênis', this)">
+          <span class="esporte-emoji">🎾</span> Tênis
+        </div>
+        <div class="esporte-botao" onclick="escolherEsporte('Vôlei', this)">
+          <span class="esporte-emoji">🏐</span> Vôlei
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        SYS_BUILD &nbsp; 2025.05.20<br>
+        MODULE &nbsp;·&nbsp; SPORTS_INTEL
+      </div>
+    </div>
+
+    <!-- área de chat -->
+    <div class="chat-area" id="chat-area">
+
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <div class="header-icon">⚡</div>
+          <div>
+            <div class="header-title">Painel de análise</div>
+            <div class="header-subtitle">Módulo ativo · Sports Intelligence</div>
+          </div>
+        </div>
+        <div class="chat-header-right">
+          <div class="header-badge" id="header-esporte">Geral</div>
+          <div class="header-badge">IA Online</div>
+        </div>
+      </div>
+
+      <div id="caixa-de-chat"></div>
+
+      <!-- preview de arquivos -->
+      <div id="area-preview"></div>
+
+      <!-- input -->
+      <div class="area-de-input">
+        <button class="btn-anexo" title="Enviar imagem">
+          📷
+          <input type="file" id="input-imagem" accept="image/*" multiple onchange="selecionarArquivos(this.files,'imagem')">
+        </button>
+
+        <button class="btn-anexo" title="Anexar arquivo">
+          📎
+          <input type="file" id="input-arquivo" accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.pptx,.zip" multiple onchange="selecionarArquivos(this.files,'arquivo')">
+        </button>
+
+        <textarea
+          id="campo-mensagem"
+          placeholder="Consulte o JARVIS sobre esportes..."
+          onkeypress="verificarEnter(event)"
+          rows="1"
+        ></textarea>
+
+        <span class="input-hint">↵</span>
+
+        <button id="botao-emoji" title="Emojis" style="
+          width:36px;height:36px;
+          border:1px solid var(--border2);
+          border-radius:6px;
+          background:var(--bg3);
+          color:var(--text2);
+          cursor:pointer;
+          font-size:16px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-shrink:0;
+          transition:all 0.2s;
+        ">😊</button>
+
+        <button id="botao-enviar" onclick="enviarMensagem()">Enviar</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const caixaChat   = document.getElementById("caixa-de-chat");
+    const areaPreview = document.getElementById("area-preview");
+    let esporteSelecionado = "";
+    let arquivosPendentes  = [];
+    let historico          = []; // ← histórico real da conversa
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function aleatorio(l)    { return l[Math.floor(Math.random()*l.length)]; }
+    function gerarId()       { return Math.random().toString(36).slice(2,9); }
+    function formatarTamanho(b) {
+      if (b < 1024)         return b + " B";
+      if (b < 1024*1024)    return (b/1024).toFixed(1) + " KB";
+      return (b/(1024*1024)).toFixed(1) + " MB";
+    }
+    function iconePorExtensao(n) {
+      const ext = n.split('.').pop().toLowerCase();
+      return {pdf:"📕",doc:"📘",docx:"📘",txt:"📄",csv:"📊",xlsx:"📊",xls:"📊",pptx:"📙",ppt:"📙",zip:"🗜️",rar:"🗜️"}[ext] || "📄";
+    }
+    function horaAtual() {
+      const d = new Date();
+      return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    }
+
+    // ── toast ────────────────────────────────────────────────────────────────
+    function mostrarToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("visivel");
+      setTimeout(()=> t.classList.remove("visivel"), 2500);
+    }
+
+    // ── lightbox ─────────────────────────────────────────────────────────────
+    function abrirLightbox(src) {
+      document.getElementById("lightbox-img").src = src;
+      document.getElementById("lightbox").classList.add("ativo");
+    }
+    function fecharLightbox() {
+      document.getElementById("lightbox").classList.remove("ativo");
+    }
+    document.addEventListener("keydown", e => { if(e.key==="Escape") fecharLightbox(); });
+
+    // ── seleção de arquivos ──────────────────────────────────────────────────
+    const MAX_ARQ = 5, MAX_TAM = 20*1024*1024;
+
+    function selecionarArquivos(files, tipo) {
+      Array.from(files).forEach(file => {
+        if (arquivosPendentes.length >= MAX_ARQ) { mostrarToast("Máximo "+MAX_ARQ+" arquivos."); return; }
+        if (file.size > MAX_TAM)                 { mostrarToast(file.name+" excede 20 MB."); return; }
+
+        const id = gerarId();
+        const reader = new FileReader();
+        reader.onload = e => {
+          arquivosPendentes.push({ file, tipo, dataURL: e.target.result, id });
+          renderizarPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+      document.getElementById("input-imagem").value  = "";
+      document.getElementById("input-arquivo").value = "";
+    }
+
+    function removerPendente(id) {
+      arquivosPendentes = arquivosPendentes.filter(a => a.id !== id);
+      renderizarPreview();
+    }
+
+    function renderizarPreview() {
+      areaPreview.innerHTML = "";
+      if (!arquivosPendentes.length) { areaPreview.classList.remove("ativo"); return; }
+      areaPreview.classList.add("ativo");
+
+      arquivosPendentes.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "preview-item";
+
+        if (item.tipo === "imagem") {
+          const img = document.createElement("img");
+          img.src = item.dataURL; img.alt = item.file.name;
+          div.appendChild(img);
+        } else {
+          const inner = document.createElement("div");
+          inner.className = "preview-item-arquivo";
+          inner.innerHTML = `<span class="preview-icone">${iconePorExtensao(item.file.name)}</span><span class="preview-nome">${item.file.name}</span>`;
+          div.appendChild(inner);
+        }
+
+        const btn = document.createElement("button");
+        btn.className = "preview-remover"; btn.textContent = "✕"; btn.title = "Remover";
+        btn.onclick = (id => () => removerPendente(id))(item.id);
+        div.appendChild(btn);
+        areaPreview.appendChild(div);
+      });
+    }
+
+    // ── adicionar mensagem ───────────────────────────────────────────────────
+    function adicionarMensagem(texto, tipo, anexos) {
+      const hora = horaAtual();
+      const row  = document.createElement("div");
+      row.className = "msg-row " + (tipo === "mensagem-usuario" ? "usuario" : "bot");
+
+      if (tipo === "mensagem-bot") {
+        const av = document.createElement("div");
+        av.className = "msg-avatar";
+        const avImg = document.createElement("img");
+        avImg.src = "reator.png"; avImg.alt = "J";
+        av.appendChild(avImg);
+        row.appendChild(av);
+      }
+
+      const col = document.createElement("div");
+      col.style.cssText = tipo === "mensagem-usuario"
+        ? "display:flex;flex-direction:column;align-items:flex-end;max-width:72%;min-width:0;"
+        : "display:flex;flex-direction:column;align-items:flex-start;max-width:72%;min-width:0;";
+
+      const msg = document.createElement("div");
+      msg.className = "mensagem " + tipo;
+      msg.style.cssText = "width:fit-content;max-width:100%;white-space:normal;";
+
+      if (tipo === "mensagem-bot") {
+        if (texto) {
+          // Renderiza formatado mas com fade-in suave
+          msg.style.opacity = '0';
+          msg.style.transform = 'translateY(4px)';
+          msg.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          msg.innerHTML = formatarRespostaBot(texto);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              msg.style.opacity = '1';
+              msg.style.transform = 'translateY(0)';
+              caixaChat.scrollTop = caixaChat.scrollHeight;
+            });
+          });
+        }
+      } else {
+        if (texto) {
+          const p = document.createElement("p"); p.textContent = texto;
+          msg.appendChild(p);
+        }
+        if (anexos && anexos.length) {
+          anexos.forEach(item => {
+            if (item.tipo === "imagem") {
+              const img = document.createElement("img");
+              img.src = item.dataURL; img.alt = item.file.name;
+              img.className = "msg-imagem";
+              img.title = "Clique para ampliar";
+              img.onclick = (src => () => abrirLightbox(src))(item.dataURL);
+              msg.appendChild(img);
+            } else {
+              const d = document.createElement("div");
+              d.className = "msg-arquivo";
+              d.innerHTML = `
+                <span class="msg-arquivo-icone">${iconePorExtensao(item.file.name)}</span>
+                <div class="msg-arquivo-info">
+                  <span class="msg-arquivo-nome">${item.file.name}</span>
+                  <span class="msg-arquivo-tamanho">${formatarTamanho(item.file.size)}</span>
+                </div>`;
+              msg.appendChild(d);
+            }
+          });
+        }
+      }
+
+      col.appendChild(msg);
+
+      const timeEl = document.createElement("div");
+      timeEl.className = "msg-time";
+      timeEl.textContent = hora;
+      col.appendChild(timeEl);
+
+      row.appendChild(col);
+      caixaChat.appendChild(row);
+      caixaChat.scrollTop = caixaChat.scrollHeight;
+    }
+
+    // indicador de digitação
+    function mostrarTyping() {
+      const row = document.createElement("div");
+      row.className = "msg-row bot"; row.id = "typing-row";
+      const av = document.createElement("div");
+      av.className = "msg-avatar";
+      const avImg = document.createElement("img"); avImg.src = "reator.png"; avImg.alt = "J";
+      av.appendChild(avImg); row.appendChild(av);
+      const ti = document.createElement("div");
+      ti.className = "typing-indicator";
+      ti.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      row.appendChild(ti);
+      caixaChat.appendChild(row);
+      caixaChat.scrollTop = caixaChat.scrollHeight;
+    }
+
+    function removerTyping() {
+      const el = document.getElementById("typing-row");
+      if (el) el.remove();
+    }
+
+    // ── esporte ──────────────────────────────────────────────────────────────
+    function escolherEsporte(nome, el) {
+      esporteSelecionado = nome;
+      document.querySelectorAll(".esporte-botao").forEach(b => b.classList.remove("ativo"));
+      if (el) el.classList.add("ativo");
+      document.getElementById("header-esporte").textContent = nome;
+
+      // Envia para a API real em vez de usar resposta hardcoded
+      const mensagemEsporte = `Quero saber sobre ${nome}. Me dê informações, dicas e novidades sobre este esporte!`;
+      adicionarMensagem(nome, "mensagem-usuario");
+      _chamarAPI(mensagemEsporte);
+    }
+
+    // ── formatar resposta do bot ─────────────────────────────────────────────
+    function formatarRespostaBot(texto) {
+      const esc = s => s
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;');
+
+      const linhas = texto.split('\n');
+      let html = '';
+      let dentroLista = false;
+      let dentroListaNum = false;
+
+      const fecharListas = () => {
+        if (dentroLista)    { html += '</ul>'; dentroLista = false; }
+        if (dentroListaNum) { html += '</ol>'; dentroListaNum = false; }
+      };
+
+      for (let i = 0; i < linhas.length; i++) {
+        const l = linhas[i].trim();
+
+        // Linha vazia
+        if (!l) {
+          fecharListas();
+          continue;
+        }
+
+        // Separador ---
+        if (/^---+$/.test(l)) {
+          fecharListas();
+          html += '<hr class="bot-divider">';
+          continue;
+        }
+
+        // Título ## ou ### ou **texto** sozinho na linha
+        if (/^#{1,3}\s+/.test(l) || /^\*\*[^*]+\*\*\s*:?\s*$/.test(l)) {
+          fecharListas();
+          const titulo = l
+            .replace(/^#{1,3}\s+/, '')
+            .replace(/^\*\*/, '')
+            .replace(/\*\*\s*:?\s*$/, '')
+            .replace(/:$/, '');
+          html += `<div class="bot-section-title">${esc(titulo)}</div>`;
+          continue;
+        }
+
+        // Bloco de destaque > citação
+        if (/^>\s+/.test(l)) {
+          fecharListas();
+          const conteudo = l.replace(/^>\s+/, '');
+          html += `<div class="bot-highlight">${formatarInline(esc(conteudo))}</div>`;
+          continue;
+        }
+
+        // Lista não-ordenada - ou • ou *
+        if (/^[-•*]\s+/.test(l)) {
+          fecharListaNum();
+          if (!dentroLista) { html += '<ul>'; dentroLista = true; }
+          const conteudo = l.replace(/^[-•*]\s+/, '');
+          html += `<li>${formatarInline(esc(conteudo))}</li>`;
+          continue;
+        }
+
+        // Lista numerada 1. 2. etc
+        if (/^\d+[.)]\s+/.test(l)) {
+          fecharLista();
+          if (!dentroListaNum) { html += '<ol>'; dentroListaNum = true; }
+          const conteudo = l.replace(/^\d+[.)]\s+/, '');
+          html += `<li>${formatarInline(esc(conteudo))}</li>`;
+          continue;
+        }
+
+        // Parágrafo normal
+        fecharListas();
+        html += `<p>${formatarInline(esc(l))}</p>`;
+      }
+
+      fecharListas();
+      return html;
+
+      function fecharLista()    { if (dentroLista)    { html += '</ul>'; dentroLista = false; } }
+      function fecharListaNum() { if (dentroListaNum) { html += '</ol>'; dentroListaNum = false; } }
+    }
+
+    function formatarInline(texto) {
+      return texto
+        // **negrito**
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // *itálico* (sem capturar **)
+        .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+        // _itálico_
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+        // `código`
+        .replace(/`(.+?)`/g, '<span class="bot-tag">$1</span>');
+    }
+
+    // ── chamada real à API ───────────────────────────────────────────────────
+    async function _chamarAPI(texto) {
+      const botao = document.getElementById("botao-enviar");
+      botao.disabled = true;
+      mostrarTyping();
+
+      try {
+        historico.push({ role: "user", content: texto });
+
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mensagem: texto, historico: historico })
+        });
+
+        const dados = await res.json();
+        removerTyping();
+
+        if (dados.resposta) {
+          historico.push({ role: "assistant", content: dados.resposta });
+          adicionarMensagem(dados.resposta, "mensagem-bot");
+        } else {
+          adicionarMensagem("Erro: " + (dados.erro || "Resposta inválida."), "mensagem-bot");
+        }
+
+      } catch (err) {
+        removerTyping();
+        adicionarMensagem("Erro de conexão com o servidor. Verifique se o backend está rodando. 🔌", "mensagem-bot");
+        console.error(err);
+      } finally {
+        botao.disabled = false;
+      }
+    }
+
+    // ── enviar mensagem ──────────────────────────────────────────────────────
+    async function enviarMensagem() {
+      const campo  = document.getElementById("campo-mensagem");
+      const texto  = campo.value.trim();
+      const anexos = [...arquivosPendentes];
+      if (!texto && !anexos.length) return;
+
+      adicionarMensagem(texto, "mensagem-usuario", anexos);
+      campo.value = ""; arquivosPendentes = []; renderizarPreview();
+
+      // Monta mensagem com contexto de esporte se selecionado
+      let mensagemFinal = texto;
+      if (esporteSelecionado && texto) {
+        mensagemFinal = `[Módulo: ${esporteSelecionado}] ${texto}`;
+      }
+
+      // Adiciona contexto de anexos se houver
+      if (anexos.length) {
+        const temImg = anexos.some(a => a.tipo === "imagem");
+        const temArq = anexos.some(a => a.tipo === "arquivo");
+        const nomes  = anexos.map(a => a.file.name).join(", ");
+        if (temImg) mensagemFinal += ` [Imagem enviada: ${nomes}]`;
+        if (temArq) mensagemFinal += ` [Arquivo enviado: ${nomes}]`;
+      }
+
+      await _chamarAPI(mensagemFinal);
+    }
+
+    function verificarEnter(e) { if (e.key === "Enter") enviarMensagem(); }
+
+    // ── drag & drop ──────────────────────────────────────────────────────────
+    const chatArea = document.getElementById("chat-area");
+    chatArea.addEventListener("dragover",  e => { e.preventDefault(); chatArea.classList.add("drag-over"); });
+    chatArea.addEventListener("dragleave", e => { if (!chatArea.contains(e.relatedTarget)) chatArea.classList.remove("drag-over"); });
+    chatArea.addEventListener("drop", e => {
+      e.preventDefault(); chatArea.classList.remove("drag-over");
+      const files = e.dataTransfer.files;
+      if (!files.length) return;
+      Array.from(files).forEach(f => selecionarArquivos([f], f.type.startsWith("image/") ? "imagem" : "arquivo"));
+      mostrarToast(files.length + " arquivo(s) adicionado(s)!");
+    });
+
+    // ── paste ────────────────────────────────────────────────────────────────
+    document.addEventListener("paste", e => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      Array.from(items).forEach(item => {
+        if (item.type.startsWith("image/")) {
+          const f = item.getAsFile();
+          if (f) selecionarArquivos([f], "imagem");
+        }
+      });
+    });
+
+    // ── loading ──────────────────────────────────────────────────────────────
+    const stages   = ["Inicializando sistema","Carregando módulos","Calibrando sensores","Verificando integridade","Sincronizando IA","Sistema pronto"];
+    const statuses = ["Boot sequence started...","Loading core modules...","Sensor array online...","Integrity check: OK","AI sync in progress...","All systems nominal"];
+
+    let pct=0, stageIdx=0;
+    const pbar    = document.getElementById("pbar");
+    const sLabel  = document.getElementById("stage-label");
+    const sStatus = document.getElementById("status-text");
+    const sPct    = document.getElementById("pct-display");
+    const loadEl  = document.getElementById("loading-screen");
+
+    function tick() {
+      if (pct < 100) pct = Math.min(pct + Math.random()*2.2, 100);
+      const p = Math.round(pct);
+      sPct.textContent = p + "%";
+      pbar.style.width = p + "%";
+
+      const idx = Math.min(Math.floor(pct/17), stages.length-1);
+      if (idx !== stageIdx) { stageIdx=idx; sLabel.textContent=stages[idx]; sStatus.textContent=statuses[idx]; }
+
+      if (pct >= 100) {
+        sLabel.textContent=stages[5]; sStatus.textContent=statuses[5]; sPct.textContent="100%";
+        setTimeout(() => {
+          loadEl.classList.add("ocultar");
+          setTimeout(() => {
+            loadEl.style.display = "none";
+
+            const sep = document.createElement("div");
+            sep.className = "separador-tempo";
+            sep.innerHTML = `<span>Sistema iniciado · ${new Date().toLocaleDateString('pt-BR')} · ${horaAtual()}</span>`;
+            caixaChat.appendChild(sep);
+
+            adicionarMensagem(
+              "Sistemas online. Sou o JARVIS, seu assistente esportivo. Selecione um esporte na barra lateral, faça perguntas, ou envie imagens 📷 e arquivos 📎.",
+              "mensagem-bot"
+            );
+          }, 800);
+        }, 1800);
+        return;
+      }
+      setTimeout(tick, 80);
+    }
+
+    function iniciarJarvis() {
+      document.getElementById("tela-inicio").style.display = "none";
+      document.getElementById("som-loading").play().catch(()=>{});
+      tick();
+    }
+  </script>
+
+  <script src="emoji-picker.js"></script>
+<script>
+  new EmojiPicker({
+    inputSelector:   "#campo-mensagem",
+    triggerSelector: "#botao-emoji"
+  });
+</script>
+
+</body>
+</html>

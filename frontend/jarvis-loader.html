@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis UI</title>
+  <link rel="stylesheet" href="jarvis.css">
+</head>
+<body>
+
+<div class="jarvis-bg">
+  <div class="scanline"></div>
+  <div class="frame-wrapper">
+    <div class="svg-frame">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+
+      <svg viewBox="0 0 344 344"><circle cx="172" cy="172" r="138" stroke="#00ffff" stroke-width="2.5" stroke-dasharray="60 18 30 18 80 18 40 18" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 344 344"><g id="out2"><circle cx="172" cy="172" r="108" stroke="#ccee00" stroke-width="2" stroke-dasharray="50 15 25 15 65 15" stroke-linecap="round"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="out3"><circle cx="172" cy="172" r="80" stroke="#00ffff" stroke-width="2" stroke-dasharray="40 14 20 14 55 14"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="inner1"><circle cx="172" cy="172" r="55" stroke="#ddcc00" stroke-width="2" stroke-dasharray="30 12 18 12 40 12"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="inner3"><circle cx="172" cy="172" r="35" stroke="#00ffff" stroke-width="2" stroke-dasharray="22 10 14 10"/></g></svg>
+      <svg viewBox="0 0 344 344"><g id="center"><circle id="center1" cx="172" cy="172" r="10"/></g></svg>
+    </div>
+  </div>
+
+  <div class="info-panel">
+    <div class="system-name">J.A.R.V.I.S</div>
+    <div class="progress-label" id="stage-label">INICIALIZANDO SISTEMA</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="pbar"></div></div>
+    <div class="status-text" id="status-text">AGUARDANDO...</div>
+    <div class="pct-display" id="pct-display">0%</div>
+  </div>
+</div>
+
+<script>
+  const stages   = ["INICIALIZANDO SISTEMA","CARREGANDO MÓDULOS","CALIBRANDO SENSORES","VERIFICANDO INTEGRIDADE","SINCRONIZANDO IA","SISTEMA PRONTO"];
+  const statuses = ["BOOT SEQUENCE STARTED...","LOADING CORE MODULES...","SENSOR ARRAY ONLINE...","INTEGRITY CHECK: OK","AI SYNC IN PROGRESS...","ALL SYSTEMS NOMINAL"];
+
+  let pct = 0, stageIdx = 0;
+  const pbar = document.getElementById('pbar');
+  const stageLabel = document.getElementById('stage-label');
+  const statusText = document.getElementById('status-text');
+  const pctDisplay = document.getElementById('pct-display');
+
+  function tick() {
+    if (pct < 100) pct = Math.min(pct + Math.random() * 2.2, 100);
+    const p = Math.round(pct);
+    pctDisplay.textContent = p + '%';
+    pbar.style.width = p + '%';
+    const idx = Math.min(Math.floor(pct / 17), stages.length - 1);
+    if (idx !== stageIdx) { stageIdx = idx; stageLabel.textContent = stages[idx]; statusText.textContent = statuses[idx]; }
+    if (pct >= 100) {
+      stageLabel.textContent = stages[5]; statusText.textContent = statuses[5]; pctDisplay.textContent = '100%';
+      setTimeout(() => { pct = 0; stageIdx = 0; pbar.style.width = '0%'; }, 1800);
+    }
+    setTimeout(tick, 80);
+  }
+  tick();
+</script>
+
+</body>
+</html>
